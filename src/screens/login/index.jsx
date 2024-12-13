@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -40,6 +40,13 @@ const Login = () => {
     setUser(findedUser);
     navigation.navigate("Timeline");
   };
+
+  useEffect(() => {
+    navigation.addListener("blur", () => {
+      setEmail("");
+      setPassword("");
+    });
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -128,10 +135,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#0f0f0f",
     justifyContent: "center",
     alignItems: "center",
+    paddingHorizontal: 20,
   },
   formContainer: {
-    width: "80%",
-    maxWidth: 430,
+    width: "100%",
   },
   header: {
     fontSize: 32,

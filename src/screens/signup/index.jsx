@@ -37,8 +37,6 @@ const Signup = () => {
   const fileInput = useRef(null);
 
   const handleSignup = async () => {
-    console.log("1");
-
     if (!name) return Toast.show({ type: "error", text1: "Informe o nome" });
     if (!user) return Toast.show({ type: "error", text1: "Informe o user" });
     if (!email) return Toast.show({ type: "error", text1: "Informe o email" });
@@ -52,14 +50,10 @@ const Signup = () => {
       return Toast.show({ type: "error", text1: "Selecione uma imagem" });
     */
 
-    console.log("2");
-
     if (password !== confirmPassword)
       return Toast.show({ type: "error", text1: "As senhas não coincidem" });
 
     const users = JSON.parse(await AsyncStorage.getItem("users")) || [];
-
-    console.log("3");
 
     if (users.length) {
       const userExistsWithUser = users.find((u) => u.user === user);
@@ -76,8 +70,6 @@ const Signup = () => {
           text1: "Já existe um usuário com esse email",
         });
     }
-
-    console.log("4");
 
     // let imageString = await toBase64(imageSelected);
 
@@ -219,12 +211,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#0f0f0f",
     justifyContent: "center",
     alignItems: "center",
+    paddingHorizontal: 20,
   },
   formContainer: {
-    width: "80%",
+    width: "100%",
   },
   header: {
-    padding: 30,
     alignItems: "center",
   },
   headerText: {

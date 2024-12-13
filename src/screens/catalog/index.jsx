@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   catalogContainer: {
     flex: 1,
     backgroundColor: "#0f0f0f",
-    padding: 20,
+    paddingHorizontal: 20,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -120,7 +120,6 @@ const styles = StyleSheet.create({
   headerText: {
     fontSize: 16,
     color: "#fff",
-    marginTop: 20,
     marginBottom: 5,
   },
   inputContainer: {

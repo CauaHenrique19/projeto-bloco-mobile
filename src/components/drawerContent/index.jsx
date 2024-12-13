@@ -85,7 +85,9 @@ function CustomDrawerContent(props) {
               ? [styles.item, styles.itemSelected]
               : styles.item
           }
-          onPress={() => props.navigation.navigate("Profile")}
+          onPress={() =>
+            props.navigation.navigate("Profile", { user: user.user })
+          }
         >
           <View style={styles.itemContainer}>
             <Ionicons name="person-outline" size={20} color="#fafafa" />

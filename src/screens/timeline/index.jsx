@@ -9,25 +9,25 @@ import {
   StyleSheet,
   StatusBar,
   SafeAreaView,
-  Dimensions,
 } from "react-native";
 import Slider from "@react-native-community/slider";
 import { v4 as uuid } from "uuid";
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import api from "../../services/api";
 import { Context } from "../../context";
 
 import Avaliation from "../../components/avaliation";
 import Coment from "../../components/coment";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const Timeline = () => {
+const Timeline = ({ navigation }) => {
   const { user, setUser } = useContext(Context);
 
+  const [data, setData] = useState([]);
   const [avaliations, setAvaliations] = useState([]);
-  const [coments, setComents] = useState([]);
+
   const [viewInputSearchMediaMention, setViewInputSearchMediaMention] =
     useState(false);
   const [searchMediaMention, setSearchMediaMention] = useState("");
@@ -43,11 +43,28 @@ const Timeline = () => {
     setAvaliations(avaliations);
 
     const comments = JSON.parse(await AsyncStorage.getItem("comments")) || [];
-    setComents(comments);
+
+    const tempComents = comments.map((comment) => ({
+      ...comment,
+      type: "comment",
+    }));
+    const tempAvaliation = avaliations.map((avaliation) => ({
+      ...avaliation,
+      type: "avaliation",
+    }));
+
+    setData([...tempAvaliation, ...tempComents]);
   }
 
   useEffect(() => {
-    loadData();
+    navigation.addListener("focus", async () => {
+      await loadData();
+    });
+
+    navigation.addListener("blur", () => {
+      setData([]);
+      setAvaliations([]);
+    });
   }, []);
 
   function handleSearchMediasMention(text) {
@@ -104,6 +121,7 @@ const Timeline = () => {
       JSON.stringify([avaliation, ...avaliations])
     );
 
+    setData([{ ...avaliation, type: "avaliation" }, ...data]);
     setAvaliations([avaliation, ...avaliations]);
     setContentAvaliation("");
     setMentionedMedia(null);
@@ -250,40 +268,29 @@ const Timeline = () => {
             )}
           </View>
           <View style={styles.columnsContainer}>
-            <View style={styles.columnAvaliations}>
-              {avaliations.length > 0 ? (
-                avaliations.map((avaliation) => (
-                  <Avaliation key={avaliation.id} avaliation={avaliation} />
-                ))
-              ) : (
-                <View style={styles.nothingContainer}>
-                  <Text style={styles.nothingTitle}>
-                    Nenhuma avaliação encontrada
-                  </Text>
-                  <Text style={styles.nothingSubtitle}>
-                    Assim que alguém avaliar algo do seu gosto ou algum seguidor
-                    avaliar alguma coisa mostraremos aqui.
-                  </Text>
-                </View>
-              )}
-            </View>
-            <View style={styles.columnComments}>
-              {coments.length > 0 ? (
-                coments.map((coment) => (
-                  <Coment key={coment.id} coment={coment} />
-                ))
-              ) : (
-                <View style={styles.nothingContainer}>
-                  <Text style={styles.nothingTitle}>
-                    Nenhum comentário encontrado
-                  </Text>
-                  <Text style={styles.nothingSubtitle}>
-                    Assim que alguém comentar algo do seu gosto ou algum
-                    seguidor comentar alguma coisa mostraremos aqui.
-                  </Text>
-                </View>
-              )}
-            </View>
+            {data.length > 0 ? (
+              data.map((item) =>
+                item.type === "avaliation" ? (
+                  <Avaliation key={item.id} avaliation={item} />
+                ) : (
+                  <Coment
+                    key={item.id}
+                    coment={item}
+                    showRedirectToAvaliation
+                  />
+                )
+              )
+            ) : (
+              <View style={styles.nothingContainer}>
+                <Text style={styles.nothingTitle}>
+                  Nenhuma avaliação encontrada
+                </Text>
+                <Text style={styles.nothingSubtitle}>
+                  Assim que alguém avaliar algo do seu gosto ou algum seguidor
+                  avaliar alguma coisa mostraremos aqui.
+                </Text>
+              </View>
+            )}
           </View>
         </ScrollView>
       </View>
@@ -296,7 +303,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#0f0f0f",
     alignItems: "center",
-    padding: 20,
+    paddingHorizontal: 20,
   },
   timelineContentContainer: {
     width: "100%",
@@ -416,7 +423,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
   },
   searchInput: {
-    width: 250,
+    flex: 1,
     color: "white",
     fontSize: 16,
   },
@@ -456,16 +463,6 @@ const styles = StyleSheet.create({
   columnsContainer: {
     flexDirection: "column",
   },
-  columnAvaliations: {
-    marginRight: 5,
-  },
-  column: {
-    flexDirection: "column",
-    paddingHorizontal: 20,
-    maxWidth: 410,
-  },
-
-  // Nothing Container Styles
   nothingContainer: {
     width: "100%",
     marginTop: 20,

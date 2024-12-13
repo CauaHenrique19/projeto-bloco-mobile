@@ -7,7 +7,7 @@ const ContextProvider = ({ children }) => {
   const [user, setUser] = useState();
 
   const getUser = async () => {
-    setUser(await AsyncStorage.getItem("user"));
+    setUser(JSON.parse(await AsyncStorage.getItem("user")));
   };
 
   useEffect(() => {

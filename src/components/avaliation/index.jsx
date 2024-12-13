@@ -1,32 +1,32 @@
 import React, { useState, useEffect, useContext } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Image,
-  StyleSheet,
-  Animated,
-} from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "react-native-vector-icons";
 
-import AvaliationSVG from "../../assets/avaliation";
-
 import { Context } from "../../context";
+
+import AvaliationSVG from "../../assets/avaliation";
 
 const Avaliation = ({ avaliation }) => {
   const { user } = useContext(Context);
+
   const [liked, setLiked] = useState(false);
   const [like, setLike] = useState([]);
+
   const [amountLikes, setAmountLikes] = useState(0);
   const [amountComents, setAmountComents] = useState(0);
-  const [scale] = useState(new Animated.Value(1));
+
+  const [viewButtons, setViewButtons] = useState(false);
+
   const navigation = useNavigation();
 
   const getData = async () => {
-    const likes = JSON.parse(await AsyncStorage.getItem("mylikes")) || [];
-    const existentLike = likes.find((l) => l.avaliation_id === avaliation.id);
+    const likes = JSON.parse(await AsyncStorage.getItem("likes")) || [];
+    const existentMyLike = likes.find(
+      (l) => l.avaliation_id === avaliation.id && user.id === l.user_id
+    );
+
     setAmountLikes(
       likes.filter((like) => like.avaliation_id === avaliation.id).length
     );
@@ -37,9 +37,9 @@ const Avaliation = ({ avaliation }) => {
         .length
     );
 
-    if (existentLike) {
+    if (existentMyLike) {
       setLiked(true);
-      setLike(existentLike);
+      setLike(existentMyLike);
     }
   };
 
@@ -48,40 +48,30 @@ const Avaliation = ({ avaliation }) => {
   }, []);
 
   const handleLike = async () => {
-    const likes = JSON.parse(await AsyncStorage.getItem("mylikes")) || [];
+    const likes = JSON.parse(await AsyncStorage.getItem("likes")) || [];
+
     if (liked) {
-      const newLikes = likes.filter((l) => l.avaliation_id !== avaliation.id);
-      await AsyncStorage.setItem("mylikes", JSON.stringify(newLikes));
+      const index = likes.findIndex(
+        (l) => l.avaliation_id === avaliation.id && user.id === l.user_id
+      );
+      likes.splice(index, 1);
+      await AsyncStorage.setItem("likes", JSON.stringify(likes));
       setLiked(false);
+      setAmountLikes(amountLikes - 1);
     } else {
       const newLike = { user_id: user.id, avaliation_id: avaliation.id };
-      await AsyncStorage.setItem(
-        "mylikes",
-        JSON.stringify([...likes, newLike])
-      );
+      await AsyncStorage.setItem("likes", JSON.stringify([...likes, newLike]));
       setLiked(true);
+      setAmountLikes(amountLikes + 1);
     }
-  };
 
-  const handleHover = () => {
-    Animated.spring(scale, {
-      toValue: 1.05,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const handleHoverOut = () => {
-    Animated.spring(scale, {
-      toValue: 1,
-      useNativeDriver: true,
-    }).start();
+    setViewButtons(false);
   };
 
   return (
-    <Animated.View
-      style={[styles.avaliation, { transform: [{ scale }] }]}
-      onMouseEnter={handleHover}
-      onMouseLeave={handleHoverOut}
+    <TouchableOpacity
+      style={styles.avaliation}
+      onPress={() => setViewButtons(!viewButtons)}
     >
       <View style={styles.headerAvaliation}>
         <View style={styles.infoUser}>
@@ -126,33 +116,38 @@ const Avaliation = ({ avaliation }) => {
           </View>
         </View>
       </View>
-
-      {/*    <View style={styles.linksAvaliationContainer}>
-        <TouchableOpacity onPress={handleLike} style={styles.likeButton}>
-          <Ionicons
-            name={liked ? "heart" : "heart-outline"}
-            size={30}
-            color={liked ? "red" : "white"}
-          />
-        </TouchableOpacity>
-        {user.id !== avaliation.user_id && (
-          <TouchableOpacity
-            onPress={() =>
-              navigation.navigate("User", { username: avaliation.user_user })
-            }
-          >
-            <Ionicons name="person-outline" size={30} color="white" />
+      {viewButtons && (
+        <View style={styles.linksAvaliationContainer}>
+          <TouchableOpacity onPress={handleLike} style={styles.button}>
+            <Ionicons
+              name={liked ? "heart" : "heart-outline"}
+              size={30}
+              color={liked ? "red" : "white"}
+            />
           </TouchableOpacity>
-        )}
-        <TouchableOpacity
-          onPress={() =>
-            navigation.navigate("AvaliationDetails", { id: avaliation.id })
-          }
-        >
-          <Ionicons name="add-outline" size={30} color="white" />
-        </TouchableOpacity>
-      </View>*/}
-    </Animated.View>
+          {user.user !== avaliation.user_user && (
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => {
+                setViewButtons(false);
+                navigation.navigate("Profile", { user: avaliation.user_user });
+              }}
+            >
+              <Ionicons name="person-outline" size={30} color="white" />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => {
+              setViewButtons(false);
+              navigation.navigate("DetailedAvaliation", { id: avaliation.id });
+            }}
+          >
+            <Ionicons name="add-outline" size={30} color="white" />
+          </TouchableOpacity>
+        </View>
+      )}
+    </TouchableOpacity>
   );
 };
 
@@ -177,7 +172,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   userInfo: {
-    marginLeft: 10,
+    marginLeft: 5,
   },
   userName: {
     fontSize: 16,
@@ -214,7 +209,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 10,
+    paddingTop: 10,
   },
   infoMedia: {
     flexDirection: "row",
@@ -260,6 +255,8 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   linksAvaliationContainer: {
+    flexDirection: "row",
+    gap: 10,
     position: "absolute",
     top: 0,
     left: 0,
@@ -270,13 +267,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 5,
   },
-  likeButton: {
+  button: {
     width: 60,
     height: 60,
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 30,
     marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "#fafafa",
   },
 });
 
