@@ -81,7 +81,6 @@ const DetailedMedia = () => {
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-    paddingTop: 50,
     backgroundColor: "#0f0f0f",
   },
   imageDetailedMedia: {
